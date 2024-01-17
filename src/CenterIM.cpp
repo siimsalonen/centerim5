@@ -45,6 +45,7 @@
 #include <time.h>
 #include <typeinfo>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define CIM_CONFIG_PATH ".centerim5"
 
@@ -419,6 +420,11 @@ int CenterIM::run(int argc, char *argv[])
   return res;
 }
 
+void handle_sigchld(int i){
+  LOG->error(_("SIGCHLD called"));
+  wait(NULL);
+}
+
 int CenterIM::runAll(int argc, char *argv[])
 {
   int res = 1;
@@ -446,6 +452,7 @@ int CenterIM::runAll(int argc, char *argv[])
 #endif
 
   signal(SIGPIPE, SIG_IGN);
+  signal(SIGCHLD, handle_sigchld);
 
   // Parse command-line arguments.
   bool ascii = false;
