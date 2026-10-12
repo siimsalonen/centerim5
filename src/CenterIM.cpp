@@ -420,9 +420,14 @@ int CenterIM::run(int argc, char *argv[])
   return res;
 }
 
-void handle_sigchld(int i){
-  LOG->error(_("SIGCHLD called"));
-  wait(NULL);
+// Reap terminated child processes. Libpurple forks DNS resolver processes and never
+// waits for them after they exit, it relies on the UI to do it (as Pidgin and Finch do).
+static void sigchld_handler(int /*signum*/)
+{
+  int saved_errno = errno;
+  while (waitpid(-1, nullptr, WNOHANG) > 0)
+    ;
+  errno = saved_errno;
 }
 
 int CenterIM::runAll(int argc, char *argv[])
@@ -452,7 +457,12 @@ int CenterIM::runAll(int argc, char *argv[])
 #endif
 
   signal(SIGPIPE, SIG_IGN);
-  signal(SIGCHLD, handle_sigchld);
+
+  struct sigaction sigchld = {};
+  sigchld.sa_handler = sigchld_handler;
+  sigchld.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+  sigemptyset(&sigchld.sa_mask);
+  sigaction(SIGCHLD, &sigchld, nullptr);
 
   // Parse command-line arguments.
   bool ascii = false;
