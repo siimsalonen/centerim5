@@ -317,6 +317,14 @@ void Log::default_log_handler(
     return;
 
   Level level = convertGLibDebugLevel(flags);
+
+  // Harmless: plugin compat macros pass NULL when no conversation is open.
+  if (std::strcmp(msg, "purple_conversation_get_chat_data: assertion "
+                       "'conv != NULL' failed") == 0 ||
+    std::strcmp(msg, "purple_conversation_get_im_data: assertion "
+                     "'conv != NULL' failed") == 0)
+    level = LEVEL_DEBUG;
+
   if (log_level_glib_ < level)
     return; // Do not show this message.
 
