@@ -268,6 +268,8 @@ void Conversations::updateLabel(int i)
     conversations_[i].typing_status);
   conversations_[i].label->setText(name);
   g_free(name);
+
+  conversations_[i].conv->updateTitle();
 }
 
 void Conversations::updateLabels()
